@@ -63,7 +63,13 @@ dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:1
 .box h3{margin:0 0 14px;color:var(--brand)}
 .f{display:grid;grid-template-columns:1fr 1fr;gap:12px}.f label{display:flex;flex-direction:column;gap:4px;font-weight:500;font-size:13px}.f .full{grid-column:1/-1}
 .f fieldset{border:1px solid var(--line);border-radius:8px;margin:0;padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px}.f legend{font-weight:600;color:var(--brand);padding:0 6px}
-.hide{display:none!important}
+.hide,.off{display:none!important}
+.stepH{background:var(--brand2);color:var(--brand);font-weight:700;padding:8px 12px;border-radius:6px;margin-bottom:12px;letter-spacing:.3px}.stepH small{font-weight:500;color:var(--mut)}
+#map{position:relative;z-index:0}
+.pinw{width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.pin span{display:block;transform:rotate(45deg);color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:16px}
+.glist{display:flex;width:100%;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;text-align:left}
+.vbox .ph{height:260px}
 .prev{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.prev div{position:relative}.prev img{width:96px;height:72px;object-fit:cover;border-radius:6px;border:2px solid var(--line)}
 .prev .main img{border-color:var(--brand)}.prev span{position:absolute;left:3px;bottom:3px;background:var(--brand);color:#fff;font-size:10px;padding:1px 5px;border-radius:4px}
 .prev button{position:absolute;right:2px;top:2px;border:0;background:#000a;color:#fff;border-radius:50%;width:20px;height:20px;cursor:pointer}
@@ -108,29 +114,33 @@ footer{text-align:center;color:var(--mut);padding:18px;font-size:12px}
 <!-- Modal ficha -->
 <div class="modal" id="mFicha"><div class="box">
   <h3 id="mTitle">Añadir ficha</h3>
+  <div id="stepH" class="stepH hide"></div>
   <div class="f" id="form">
-    <label>Vía<select id="via"></select></label>
-    <label>No. de calzadas<select id="ncal"><option>1</option><option>2</option></select></label>
-    <label id="calW" class="hide">Calzada<select id="calz"><option>Derecha</option><option>Izquierda</option></select></label>
-    <label>PR <span class="hint">ej. PR 9+500</span><input id="pr" placeholder="PR 9+500"></label>
-    <label>Latitud<input id="lat" type="number" step="any" placeholder="10.9685"></label>
-    <label>Longitud<input id="lng" type="number" step="any" placeholder="-74.7813"></label>
-    <label>Carril<select id="car"><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
-    <label>Tipo de daño<select id="tdan"></select></label>
-    <label>Tipología<select id="tip"></select></label>
-    <label>Severidad<select id="sev"><option value="B">Baja (B)</option><option value="M">Media (M)</option><option value="A">Alta (A)</option></select></label>
-    <fieldset><legend>Daño</legend>
+    <label class="gen">Vía<select id="via"></select></label>
+    <label class="gen">No. de calzadas<select id="ncal"><option>1</option><option>2</option></select></label>
+    <label id="calW" class="gen hide">Calzada<select id="calz"><option>Derecha</option><option>Izquierda</option></select></label>
+    <label class="gen">PR <span class="hint">ej. PR 9+500</span><input id="pr" placeholder="PR 9+500"></label>
+    <label class="gen cnt full">¿Cuántos daños se van a registrar en este PR?<input id="cnt" type="number" min="1" max="20" step="1" value="1"></label>
+    <label class="dmg coord">Latitud<input id="lat" type="number" step="any" placeholder="10.9685"></label>
+    <label class="dmg coord">Longitud<input id="lng" type="number" step="any" placeholder="-74.7813"></label>
+    <div class="full hint off" id="cNote"></div>
+    <label class="dmg">Carril<select id="car"></select></label>
+    <label class="dmg">Tipo de daño<select id="tdan"></select></label>
+    <label class="dmg">Tipología<select id="tip"></select></label>
+    <label class="dmg">Severidad<select id="sev"><option value="B">Baja (B)</option><option value="M">Media (M)</option><option value="A">Alta (A)</option></select></label>
+    <fieldset class="dmg"><legend>Daño</legend>
       <label>Largo (m)<input id="dL" type="number" step="any" min="0"></label>
       <label class="anc">Ancho (m)<input id="dA" type="number" step="any" min="0"></label></fieldset>
-    <fieldset><legend>Reparación</legend>
-      <label>Largo (m)<input id="rL" type="number" step="any" min="0"></label>
-      <label class="anc">Ancho (m)<input id="rA" type="number" step="any" min="0"></label></fieldset>
-    <label class="full">Comentarios y aclaraciones<textarea id="com" placeholder="Observaciones del levantamiento, condiciones particulares, información adicional…"></textarea></label>
-    <label class="full">Fotos (1 a 4) <span class="hint">La primera que subas será la foto principal.</span>
+    <label class="dmg">¿Hay reparación?<select id="hrep"><option value="0">No</option><option value="1">Sí</option></select></label>
+    <fieldset class="dmg full hide" id="repW"><legend>Reparación</legend>
+      <label>Largo de reparación (m)<input id="rL" type="number" step="any" min="0"></label>
+      <label class="anc">Ancho de reparación (m)<input id="rA" type="number" step="any" min="0"></label></fieldset>
+    <label class="full dmg">Comentarios y aclaraciones<textarea id="com" placeholder="Observaciones del levantamiento, condiciones particulares, información adicional…"></textarea></label>
+    <label class="full dmg">Fotos (1 a 4) <span class="hint">La primera que subas será la foto principal.</span>
       <input id="fotos" type="file" accept="image/*" multiple></label>
-    <div class="prev full" id="prev"></div>
+    <div class="prev full dmg" id="prev"></div>
   </div>
-  <div class="mf"><button class="btn sec" data-act="close">Cancelar</button><button class="btn" id="saveBtn" data-act="save">Guardar ficha</button></div>
+  <div class="mf"><button class="btn sec" data-act="close">Cancelar</button><button class="btn sec hide" id="prevBtn" data-act="prev">← Anterior</button><button class="btn" id="saveBtn" data-act="save">Continuar</button></div>
 </div></div>
 
 <!-- Modal vincular pin -->
@@ -140,6 +150,11 @@ footer{text-align:center;color:var(--mut);padding:18px;font-size:12px}
   <label class="f" style="display:block"><select id="pinFicha" style="width:100%"></select></label>
   <div class="mf"><button class="btn sec" data-act="close">Cancelar</button><button class="btn" data-act="savepin">Guardar pin</button></div>
 </div></div>
+<!-- Selector de daños de un pin agrupado -->
+<div class="modal" id="mGrp"><div class="box" style="max-width:520px"><h3 id="gTitle"></h3><div id="gBody"></div>
+  <div class="mf"><button class="btn red" id="gDel" data-act="delgrp">Eliminar pin</button><button class="btn sec" data-act="close">Cerrar</button></div></div></div>
+<!-- Ficha técnica consultada desde el mapa -->
+<div class="modal" id="mVer"><div class="box vbox"><div id="vBody" class="card"></div><div class="mf" id="vAct"></div></div></div>
 <div id="toast"></div>
 
 <script type="module">
@@ -165,12 +180,19 @@ const TIPOS={
  "Daños Superficiales":["Desgaste Superficial (DSU)","Pérdida de Agregado (PA)","Pulimiento del Agregado (PU)","Cabezas Duras (CD)","Exudación (EX)","Surcos (SU)"],
  "Otros Daños":["Corrimiento Vertical de la Berma (CVB)","Separación de la Berma (SB)","Afloramiento de Finos (AFI)","Afloramiento de Agua (AFA)"]};
 const SEV={B:"Baja",M:"Media",A:"Alta"},COL={B:"#2e9e5b",M:"#f08c1a",A:"#d93636"};
+const CARR1=["Carril derecho","Carril izquierdo","Berma izquierda","Berma derecha"],RK={B:1,M:2,A:3};
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const opts=(arr,first)=>(first?`<option value="">${first}</option>`:"")+arr.map(v=>`<option>${esc(v)}</option>`).join("");
 const toast=(m,ms=3000)=>{const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(toast.t);if(ms)toast.t=setTimeout(()=>t.style.display="none",ms)};
 const prVal=s=>{const m=String(s).match(/(\d+)\s*\+\s*(\d+)/);return m?+m[1]*1000+ +m[2]:(parseFloat(String(s).replace(/[^\d.]/g,""))||0)*1000};
+// Compatibilidad con registros antiguos (solo lectura, no modifica Firestore)
+function carrilLabel(f){const c=String(f.carril??"").trim();if(!c)return "—";
+  if(f.ncal==2)return /^\d+$/.test(c)?"Carril "+c:c;
+  return {"1":"Carril derecho","2":"Carril izquierdo"}[c]||(/^\d+$/.test(c)?"Carril "+c:c)}
+const hayRepOf=f=>typeof f.hayRep==="boolean"?f.hayRep:(+f.rL>0||+f.rA>0);
+const closeAll=()=>document.querySelectorAll(".modal").forEach(m=>m.classList.remove("on"));
 
 /* ============ LOGO ============ */
 $("#logo").innerHTML=(LOGO_SRC?`<img src="${LOGO_SRC}" alt="INVIAS">`:`<div class="ph">INVIAS</div>`)+`<div><b>Base de datos técnica de inspección</b><small>Inspección visual de vías · DT Atlántico</small></div>`;
@@ -191,20 +213,20 @@ if(firebaseConfig.apiKey&&firebaseConfig.projectId){
         setStatus(!s.metadata.fromCache&&navigator.onLine,!s.metadata.fromCache&&navigator.onLine?"Conectado · tiempo real":"Sin conexión");
         renderAll();
       },e=>{setStatus(false,"Error: "+e.code);console.error(e)});
-    store={save:(c,id,d)=>F.setDoc(F.doc(db,c,id),d),del:(c,id)=>F.deleteDoc(F.doc(db,c,id))};
+    store={save:(c,id,d)=>F.setDoc(F.doc(db,c,id),d,{merge:true}),del:(c,id)=>F.deleteDoc(F.doc(db,c,id))};
     addEventListener("offline",()=>setStatus(false,"Sin conexión"));
   }catch(e){console.error(e);setStatus(false,"Error al cargar Firebase")}
 }
 if(!store){
   setStatus(false,"Sin Firebase · modo local (los datos no se guardan)");
-  store={save:async(c,id,d)=>{const a=DB[c],i=a.findIndex(x=>x.id===id);const o={...d,id};i<0?a.push(o):a[i]=o;renderAll()},
+  store={save:async(c,id,d)=>{const a=DB[c],i=a.findIndex(x=>x.id===id);const o={...(i<0?{}:a[i]),...d,id};i<0?a.push(o):a[i]=o;renderAll()},
          del:async(c,id)=>{DB[c]=DB[c].filter(x=>x.id!==id);renderAll()}};
 }
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now()+""+Math.random().toString(16).slice(2);
 
 /* ============ FILTROS ============ */
 const allTip=Object.values(TIPOS).flat();
-$("#fVia").innerHTML=`<option value="">Seleccionar una vía...</option><option value="__all">Todas las vías</option>`+opts(VIAS);$("#fCalz").innerHTML=`<option value="">Todas las calzadas</option><option>Derecha</option><option>Izquierda</option>`;$("#fCar").innerHTML=opts([1,2,3,4],"Todos los carriles");
+$("#fVia").innerHTML=`<option value="">Seleccionar una vía...</option><option value="__all">Todas las vías</option>`+opts(VIAS);$("#fCalz").innerHTML=`<option value="">Todas las calzadas</option><option>Derecha</option><option>Izquierda</option>`;$("#fCar").innerHTML=opts([...CARR1,"Carril 1","Carril 2","Carril 3","Carril 4"],"Todos los carriles");
 $("#fTipo").innerHTML=opts(Object.keys(TIPOS),"Todos los daños");$("#fTip").innerHTML=opts(allTip,"Todas las tipologías");
 $("#fSev").innerHTML=`<option value="">Toda severidad</option>`+Object.entries(SEV).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
 $("#fTipo").onchange=()=>{$("#fTip").innerHTML=opts($("#fTipo").value?TIPOS[$("#fTipo").value]:allTip,"Todas las tipologías");renderList()};
@@ -217,15 +239,15 @@ function fichaHTML(f,full){
   const img=fo[0]?`<img class="ph" src="${fo[0]}" alt="Foto principal">`:`<div class="nofoto">Sin foto</div>`;
   const mos=fo.length>1?`<div class="mos ${full?"":"hide"}">${fo.slice(1).map(x=>`<img src="${x}" alt="">`).join("")}</div>`:"";
   return `${img}${mos}<div class="body"><h4><span>${esc(f.via)} · ${esc(f.pr)}</span><span class="badge ${f.severidad}">${SEV[f.severidad]} (${f.severidad})</span></h4>
-  <dl><dt>Calzada</dt><dd>${f.ncal==2?esc(f.calzada):"Única"}</dd><dt>Carril</dt><dd>${esc(f.carril)}</dd>
+  <dl><dt>Calzada</dt><dd>${f.ncal==2?esc(f.calzada):"Única"}</dd><dt>Carril</dt><dd>${esc(carrilLabel(f))}</dd>
   <dt>Latitud</dt><dd>${f.lat??"—"}</dd><dt>Longitud</dt><dd>${f.lng??"—"}</dd>
   <dt>Tipo de daño</dt><dd>${esc(f.tipoDanio)}</dd><dt>Tipología</dt><dd>${esc(f.tipologia)}</dd>
-  <dt>Daño</dt><dd>${area(f.dL,f.dA,fis)}</dd><dt>Reparación</dt><dd>${area(f.rL,f.rA,fis)}</dd></dl>${f.comentarios?`<div class="com"><b>Comentarios y aclaraciones</b><p>${esc(f.comentarios)}</p></div>`:""}</div>`;
+  <dt>Daño</dt><dd>${area(f.dL,f.dA,fis)}</dd><dt>Reparación</dt><dd>${hayRepOf(f)?area(f.rL,f.rA,fis):"No hay reparación"}</dd></dl>${f.comentarios?`<div class="com"><b>Comentarios y aclaraciones</b><p>${esc(f.comentarios)}</p></div>`:""}</div>`;
 }
 function getRows(){ // consulta actual: la usan tanto la vista como la exportación
   const via=$("#fVia").value;if(!via)return null;
-  const q=$("#q").value.toLowerCase(),F={calzada:$("#fCalz").value,carril:$("#fCar").value,tipoDanio:$("#fTipo").value,tipologia:$("#fTip").value,severidad:$("#fSev").value};
-  return DB.fichas.filter(f=>(via==="__all"||f.via===via)&&Object.entries(F).every(([k,v])=>!v||String(f[k])===v)&&(!q||[f.via,f.pr,f.tipologia,f.tipoDanio,f.calzada,f.comentarios].join(" ").toLowerCase().includes(q)))
+  const q=$("#q").value.toLowerCase(),F={calzada:$("#fCalz").value,tipoDanio:$("#fTipo").value,tipologia:$("#fTip").value,severidad:$("#fSev").value};
+  return DB.fichas.filter(f=>(via==="__all"||f.via===via)&&Object.entries(F).every(([k,v])=>!v||String(f[k])===v)&&(!$("#fCar").value||carrilLabel(f)===$("#fCar").value)&&(!q||[f.via,f.pr,f.tipologia,f.tipoDanio,f.calzada,carrilLabel(f),f.comentarios].join(" ").toLowerCase().includes(q)))
     .sort((a,b)=>VIAS.indexOf(a.via)-VIAS.indexOf(b.via)||prVal(a.pr)-prVal(b.pr));
 }
 function renderList(){
@@ -242,15 +264,23 @@ function renderList(){
    </div></details>`).join("");
 }
 
-/* ============ FORMULARIO ============ */
+/* ============ FORMULARIO (uno o varios daños por PR) ============ */
 let editId=null,fotos=[];
+const G={n:1,step:0,gen:null,drafts:[]}; // step 0 = datos del PR; 1..n = cada daño
 $("#via").innerHTML=opts(VIAS);$("#tdan").innerHTML=opts(Object.keys(TIPOS));
-const syncForm=()=>{
-  $("#tip").innerHTML=opts(TIPOS[$("#tdan").value]);
+const fillTip=()=>{$("#tip").innerHTML=opts(TIPOS[$("#tdan").value])};
+function fillCar(keep){
+  const two=$("#ncal").value==="2",L=two?["1","2","3","4"]:CARR1,cur=keep===undefined?$("#car").value:keep,c=$("#car");
+  c.innerHTML=L.map(v=>`<option value="${esc(v)}">${two?"Carril "+v:esc(v)}</option>`).join("");
+  if(cur&&![...c.options].some(o=>o.value===cur))c.insertAdjacentHTML("beforeend",`<option value="${esc(cur)}">${esc(two?"Carril "+cur:cur)}</option>`); // valor histórico
+  c.value=cur&&[...c.options].some(o=>o.value===cur)?cur:L[0];
+}
+function vis(){
   $("#calW").classList.toggle("hide",$("#ncal").value!=="2");
   document.querySelectorAll(".anc").forEach(e=>e.classList.toggle("hide",$("#tdan").value==="Fisuras"));
-};
-$("#tdan").onchange=syncForm;$("#ncal").onchange=syncForm;
+  $("#repW").classList.toggle("hide",$("#hrep").value!=="1");
+}
+$("#tdan").onchange=()=>{fillTip();vis()};$("#ncal").onchange=()=>{vis();fillCar()};$("#hrep").onchange=vis;
 function drawPrev(){
   $("#prev").innerHTML=fotos.map((s,i)=>`<div class="${i?"":"main"}"><img src="${s}" alt=""><button data-act="rmfoto" data-i="${i}" title="Quitar">×</button>${i?"":"<span>Principal</span>"}</div>`).join("");
 }
@@ -264,29 +294,85 @@ $("#fotos").onchange=async e=>{
   for(const f of e.target.files){if(fotos.length>=4){toast("Máximo 4 fotos");break}fotos.push(await compress(f))}
   e.target.value="";drawPrev();
 };
+const blank=()=>({carril:"",tdan:Object.keys(TIPOS)[0],tip:"",sev:"B",dL:"",dA:"",hrep:"0",rL:"",rA:"",com:"",fotos:[],lat:"",lng:""});
+const readDmg=()=>({carril:$("#car").value,tdan:$("#tdan").value,tip:$("#tip").value,sev:$("#sev").value,dL:$("#dL").value,dA:$("#dA").value,hrep:$("#hrep").value,rL:$("#rL").value,rA:$("#rA").value,com:$("#com").value,fotos:[...fotos],lat:$("#lat").value,lng:$("#lng").value});
+function writeDmg(d){
+  $("#tdan").value=d.tdan;fillTip();if(d.tip)$("#tip").value=d.tip;fillCar(d.carril);
+  $("#sev").value=d.sev;$("#dL").value=d.dL;$("#dA").value=d.dA;$("#hrep").value=d.hrep;$("#rL").value=d.rL;$("#rA").value=d.rA;
+  $("#com").value=d.com;$("#lat").value=d.lat;$("#lng").value=d.lng;fotos=[...d.fotos];drawPrev();vis();
+}
+const readGen=()=>({via:$("#via").value,ncal:+$("#ncal").value,calzada:$("#calz").value,pr:$("#pr").value.trim()});
+function view(){
+  const e=!!editId,s=G.step,on=(q,v)=>document.querySelectorAll(q).forEach(x=>x.classList.toggle("off",!v));
+  on(".gen",e||s===0);on(".cnt",!e&&s===0);on(".dmg",e||s>0);on(".coord",e||s===1);
+  $("#cNote").classList.toggle("off",e||s<2);
+  const sh=$("#stepH");sh.classList.toggle("hide",e);
+  sh.innerHTML=s===0?"Datos del PR":`DAÑO ${s} DE ${G.n} <small>· Vía ${esc(G.gen.via)} · ${esc(G.gen.pr)}</small>`;
+  $("#prevBtn").classList.toggle("hide",e||s===0);
+  $("#saveBtn").textContent=e?"Guardar cambios":s===0?"Continuar":s<G.n?"Siguiente daño":`Guardar ${G.n} daño${G.n>1?"s":""}`;
+  if(!e&&s>1){const d=G.drafts[0];$("#cNote").textContent=`Coordenadas del grupo (heredadas del daño 1): ${d.lat}, ${d.lng}`}
+  $("#mFicha").scrollTop=0;
+}
 function openForm(f){
-  editId=f?.id||null;fotos=[...(f?.fotos||[])];
-  $("#mTitle").textContent=f?"Editar ficha":"Añadir ficha";
-  $("#via").value=f?.via||VIAS[0];$("#ncal").value=f?.ncal||1;$("#tdan").value=f?.tipoDanio||Object.keys(TIPOS)[0];syncForm();
-  $("#tip").value=f?.tipologia||$("#tip").options[0].value;$("#calz").value=f?.calzada||"Derecha";
-  $("#pr").value=f?.pr||"";$("#lat").value=f?.lat??"";$("#lng").value=f?.lng??"";$("#car").value=f?.carril||1;$("#sev").value=f?.severidad||"B";
-  $("#dL").value=f?.dL??"";$("#dA").value=f?.dA??"";$("#rL").value=f?.rL??"";$("#rA").value=f?.rA??"";$("#com").value=f?.comentarios||"";
-  drawPrev();$("#mFicha").classList.add("on");
+  editId=f?.id||null;$("#mTitle").textContent=f?"Editar ficha":"Añadir ficha";
+  G.step=0;G.n=1;G.gen=null;G.drafts=[]; // grupo nuevo: no se reutilizan coordenadas anteriores
+  $("#via").value=f?.via||VIAS[0];$("#ncal").value=f?.ncal||1;$("#calz").value=f?.calzada||"Derecha";$("#pr").value=f?.pr||"";$("#cnt").value=1;
+  if(f){
+    const two=f.ncal==2,c=f.carril==null||f.carril===""?"":(two?String(f.carril):carrilLabel(f));
+    writeDmg({carril:c,tdan:f.tipoDanio||Object.keys(TIPOS)[0],tip:f.tipologia||"",sev:f.severidad||"B",dL:f.dL??"",dA:f.dA??"",hrep:hayRepOf(f)?"1":"0",rL:f.rL??"",rA:f.rA??"",com:f.comentarios||"",fotos:f.fotos||[],lat:f.lat??"",lng:f.lng??""});
+  }else writeDmg(blank());
+  view();$("#mFicha").classList.add("on");
+}
+function validDmg(d,needCoord){
+  if(!d.fotos.length)return "Sube al menos una foto de este daño";
+  if(needCoord){const la=Number(d.lat),lo=Number(d.lng);
+    if(d.lat===""||d.lng===""||!isFinite(la)||!isFinite(lo)||Math.abs(la)>90||Math.abs(lo)>180)return "Ingresa una latitud y longitud válidas"}
+  return "";
+}
+function buildDoc(g,d,lat,lng,ts){
+  const fis=d.tdan==="Fisuras",n=v=>v===""||v==null?null:+v,rep=d.hrep==="1";
+  return {via:g.via,ncal:g.ncal,calzada:g.ncal===2?g.calzada:null,pr:g.pr,prVal:prVal(g.pr),lat,lng,
+    carril:g.ncal===2&&/^\d+$/.test(d.carril)?+d.carril:d.carril,tipoDanio:d.tdan,tipologia:d.tip,severidad:d.sev,comentarios:d.com.trim(),
+    dL:n(d.dL),dA:fis?null:n(d.dA),hayRep:rep,rL:rep?n(d.rL):null,rA:rep&&!fis?n(d.rA):null,fotos:d.fotos,ts};
+}
+const capture=()=>{G.drafts[G.step-1]=readDmg()};
+function prevStep(){if(G.step>=1){capture();G.step--;if(G.step>=1)writeDmg(G.drafts[G.step-1])}view()}
+function start(){
+  const gen=readGen(),n=Number($("#cnt").value);
+  if(!gen.pr){toast("Indica el PR");return}
+  if(!Number.isInteger(n)||n<1||n>20){toast("Indica cuántos daños (entero entre 1 y 20)");return}
+  if(G.gen&&G.gen.ncal!==gen.ncal)G.drafts.forEach(d=>d.carril="");
+  G.gen=gen;G.n=n;G.drafts=Array.from({length:n},(_,i)=>G.drafts[i]||blank());
+  G.step=1;fillCar(G.drafts[0].carril);writeDmg(G.drafts[0]);view();
 }
 async function saveFicha(){
-  const pr=$("#pr").value.trim();
-  if(!pr||!fotos.length){toast("Indica el PR y sube al menos una foto");return}
-  const lat=$("#lat").value===""?null:+$("#lat").value,lng=$("#lng").value===""?null:+$("#lng").value;
-  const fis=$("#tdan").value==="Fisuras",n=id=>$("#"+id).value===""?null:+$("#"+id).value;
-  const f={via:$("#via").value,ncal:+$("#ncal").value,calzada:$("#ncal").value==="2"?$("#calz").value:null,pr,prVal:prVal(pr),lat,lng,
-    carril:+$("#car").value,tipoDanio:$("#tdan").value,tipologia:$("#tip").value,severidad:$("#sev").value,
-    comentarios:$("#com").value.trim(),dL:n("dL"),dA:fis?null:n("dA"),rL:n("rL"),rA:fis?null:n("rA"),fotos,ts:Date.now()};
-  const id=editId||uid();$("#saveBtn").disabled=true;
+  if(editId)return saveEdit();
+  if(G.step===0)return start();
+  capture();const err=validDmg(G.drafts[G.step-1],G.step===1);if(err){toast(err);return}
+  if(G.step<G.n){G.step++;writeDmg(G.drafts[G.step-1]);view();return}
+  for(let i=0;i<G.n;i++){const e=validDmg(G.drafts[i],i===0);if(e){G.step=i+1;writeDmg(G.drafts[i]);view();toast(`Daño ${i+1}: ${e}`);return}}
+  const shared={lat:Number(G.drafts[0].lat),lng:Number(G.drafts[0].lng)},gid=uid(),t0=Date.now();
+  let ok=0;$("#saveBtn").disabled=true;
   try{
-    await store.save("fichas",id,f);
-    if(lat!=null&&lng!=null){ // el pin de la ficha usa el mismo id que la ficha
-      const p=DB.pines.find(x=>x.id===id);await store.save("pines",id,{fichaId:id,lat,lng})}
-    $("#mFicha").classList.remove("on");toast("Ficha guardada");
+    for(let i=0;i<G.n;i++){
+      const doc=buildDoc(G.gen,G.drafts[i],shared.lat,shared.lng,t0+i);doc.grupoId=gid; // coordenadas del grupo escritas en CADA documento
+      const id=uid();await store.save("fichas",id,doc);await store.save("pines",id,{fichaId:id,lat:doc.lat,lng:doc.lng});ok++;
+    }
+    G.step=0;G.gen=null;G.drafts=[];closeAll();toast(ok>1?`${ok} daños guardados`:"Ficha guardada");
+  }catch(e){console.error(e);toast(`Error: se guardaron ${ok} de ${G.n} daños. Revisa la conexión.`,6000)}
+  $("#saveBtn").disabled=false;
+}
+async function saveEdit(){
+  const gen=readGen(),d=readDmg();
+  if(!gen.pr){toast("Indica el PR");return}
+  if(!d.fotos.length){toast("Sube al menos una foto");return}
+  let lat=null,lng=null;
+  if(d.lat!==""||d.lng!==""){const e=validDmg({...d,fotos:[1]},true);if(e){toast(e);return}lat=Number(d.lat);lng=Number(d.lng)}
+  const old=DB.fichas.find(x=>x.id===editId);$("#saveBtn").disabled=true;
+  try{
+    await store.save("fichas",editId,buildDoc(gen,d,lat,lng,old?.ts||Date.now()));
+    if(lat!=null)await store.save("pines",editId,{fichaId:editId,lat,lng});
+    closeAll();toast("Ficha guardada");
   }catch(e){console.error(e);toast("No se pudo guardar. Revisa la conexión y el tamaño de las fotos.")}
   $("#saveBtn").disabled=false;
 }
@@ -303,18 +389,41 @@ function initMap(){
     if(!DB.fichas.length){toast("Primero crea una ficha para vincular");return}
     pending=e.latlng;
     $("#pinCoord").textContent=`Ubicación: ${pending.lat.toFixed(6)}, ${pending.lng.toFixed(6)}`;
-    $("#pinFicha").innerHTML=[...DB.fichas].sort((a,b)=>a.via.localeCompare(b.via)||prVal(a.pr)-prVal(b.pr)).map(f=>`<option value="${f.id}">${esc(f.via)} · ${esc(f.pr)} · ${esc(f.tipologia)} (${f.severidad})</option>`).join("");
+    $("#pinFicha").innerHTML=[...DB.fichas].sort((a,b)=>a.via.localeCompare(b.via)||prVal(a.pr)-prVal(b.pr)).map(f=>`<option value="${f.id}">${esc(f.via)} · ${esc(f.pr)} · ${esc(f.tipologia)} · ${esc(carrilLabel(f))} (${f.severidad})</option>`).join("");
     $("#mPin").classList.add("on");
   });
 }
-function renderMap(){
+let MAPG=new Map();
+function renderMap(){ // agrupación solo visual: PR + coordenadas (+ vía)
   if(!map)return;layer.clearLayers();
+  const FM=new Map(DB.fichas.map(f=>[f.id,f])),g=new Map();
   DB.pines.forEach(p=>{
-    const f=DB.fichas.find(x=>x.id===p.fichaId);if(!f)return;
-    const ic=L.divIcon({className:"",html:`<div class="pin" style="background:${COL[f.severidad]}"></div>`,iconSize:[20,20],iconAnchor:[10,20]});
-    L.marker([p.lat,p.lng],{icon:ic}).addTo(layer)
-     .bindPopup(`<div class="card" style="border:0">${fichaHTML(f,true)}<div class="acts"><button class="btn red sm" data-act="delpin" data-id="${p.id}">Eliminar pin</button></div></div>`);
+    const f=FM.get(p.fichaId),la=+p.lat,lo=+p.lng;if(!f||!isFinite(la)||!isFinite(lo))return;
+    const k=[f.via,prVal(f.pr),la.toFixed(6),lo.toFixed(6)].join("|");
+    let o=g.get(k);if(!o)g.set(k,o={key:k,lat:la,lng:lo,pr:f.pr,via:f.via,items:[]});o.items.push({f,pin:p});
   });
+  MAPG=g;
+  g.forEach(o=>{
+    o.items.sort((a,b)=>(a.f.ts||0)-(b.f.ts||0));
+    const n=o.items.length,sev=o.items.reduce((m,i)=>(RK[i.f.severidad]||0)>RK[m]?i.f.severidad:m,"B");
+    const ic=L.divIcon({className:"",html:`<div class="pinw"><div class="pin" style="background:${COL[sev]}">${n>1?`<span>${n}</span>`:""}</div></div>`,iconSize:[34,34],iconAnchor:[17,34]});
+    L.marker([o.lat,o.lng],{icon:ic,title:`${o.pr} · ${n} daño${n>1?"s":""}`,riseOnHover:true}).addTo(layer).on("click",()=>openGroup(o.key));
+  });
+}
+function openGroup(key){
+  const o=MAPG.get(key);if(!o)return;
+  if(o.items.length===1){showFicha(o.items[0].f.id,key);return}
+  $("#gTitle").textContent=`${o.pr} · Vía ${o.via} · ${o.items.length} daños`;
+  $("#gBody").innerHTML=`<p class="hint">Seleccione el daño:</p>`+o.items.map((it,i)=>`<button class="btn sec glist" data-act="verf" data-id="${it.f.id}" data-g="${esc(key)}"><span>${i+1}. ${esc(it.f.tipologia)} <small>· ${esc(carrilLabel(it.f))}</small></span><span class="badge ${it.f.severidad}">${SEV[it.f.severidad]||""}</span></button>`).join("");
+  $("#gDel").dataset.g=key;closeAll();$("#mGrp").classList.add("on");
+}
+function showFicha(id,key){
+  const f=DB.fichas.find(x=>x.id===id),o=MAPG.get(key);if(!f)return;
+  $("#vBody").innerHTML=fichaHTML(f,true);
+  $("#vAct").innerHTML=(o&&o.items.length>1?`<button class="btn sec" data-act="back" data-g="${esc(key)}">← Volver al listado</button>`:"")
+    +(o?`<button class="btn red" data-act="delgrp" data-g="${esc(key)}">Eliminar pin</button>`:"")
+    +`<button class="btn" data-act="editv" data-id="${f.id}">Editar</button><button class="btn sec" data-act="close">Cerrar</button>`;
+  closeAll();$("#mVer").classList.add("on");
 }
 function setPinMode(on){
   pinMode=on;const b=$("#pinMode");b.className="btn "+(on?"on":"sec");b.textContent="Añadir pin: "+(on?"activado":"desactivado");
@@ -325,13 +434,16 @@ const renderAll=()=>{renderList();renderMap()};
 
 /* ============ EXPORTAR A EXCEL (con fotos embebidas) ============ */
 const loadImg=src=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src});
-async function thumb(src){ // copia reducida solo para el Excel; el original en Firestore no se toca
-  const im=await loadImg(src),k=Math.min(1,200/im.width,150/im.height),w=Math.round(im.width*k),h=Math.round(im.height*k);
+async function thumb(src,mw,mh){ // copia reducida solo para el Excel; el original en Firestore no se toca
+  const im=await loadImg(src),k=Math.min(1,mw/im.width,mh/im.height),w=Math.round(im.width*k),h=Math.round(im.height*k);
   const c=document.createElement("canvas");c.width=Math.round(w*1.5);c.height=Math.round(h*1.5);
   c.getContext("2d").drawImage(im,0,0,c.width,c.height);
   return {data:c.toDataURL("image/jpeg",.8).split(",")[1],w,h};
 }
 const fechaHoy=()=>{const d=new Date(),z=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`};
+// Distribución de las fotos dentro de la celda "Foto": 1 foto grande, 2 en fila, 3-4 en cuadrícula 2×2 (orden Foto 1→4)
+const LAY=n=>!n?{rowPx:40,c:[]}:n===1?{rowPx:210,c:[{x:5,y:5,w:310,h:200}]}:
+  {rowPx:Math.ceil(n/2)*120+5,c:Array.from({length:n},(_,i)=>({x:5+(i%2)*160,y:5+Math.floor(i/2)*120,w:150,h:112}))};
 async function exportXlsx(){
   const rows=getRows();
   if(rows===null){toast("Selecciona una vía para exportar");return}
@@ -342,26 +454,31 @@ async function exportXlsx(){
   try{
     toast("Preparando exportación...",0);await new Promise(x=>setTimeout(x,30));
     const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet("Inspección Vial");
-    const H=["Vía","Número de calzadas","Calzada","PR","Carril","Tipo de daño","Tipología","Código de tipología","Severidad","Daño - Largo (m)","Daño - Ancho (m)","Reparación - Largo (m)","Reparación - Ancho (m)","Comentarios y aclaraciones","Número de fotos","Foto 1","Foto 2","Foto 3","Foto 4"];
-    const W=[10,12,12,12,8,24,36,14,12,12,12,14,14,40,10,31,31,31,31];
-    ws.columns=H.map((h,i)=>({header:h,width:W[i]}));
-    const hr=ws.getRow(1);hr.height=34;hr.font={bold:true,color:{argb:"FFFFFFFF"}};
-    hr.alignment={vertical:"middle",horizontal:"center",wrapText:true};
-    hr.eachCell(c=>c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFEB773B"}});
-    ws.views=[{state:"frozen",ySplit:1}];
-    ws.autoFilter={from:{row:1,column:1},to:{row:1,column:H.length}};
+    [12,17,32,10,10,10,10,10,45,48].forEach((w,i)=>ws.getColumn(i+1).width=w);
+    const thin={style:"thin",color:{argb:"FF999999"}},bord={top:thin,left:thin,bottom:thin,right:thin};
+    const V={A1:"PR",B1:"PATOLOGÍA",J1:"Aclaraciones",B2:"Carril",C2:"Tipo",D2:"Sever",E2:"Daño",G2:"Reparación",I2:"Foto",E3:"Largo (m)",F3:"Ancho (m)",G3:"Largo (m)",H3:"Ancho (m)"};
+    for(let r=1;r<=3;r++)for(let c=1;c<=10;c++){
+      const cell=ws.getCell(r,c);cell.value=V[cell.address]??null;cell.font={bold:true,color:{argb:"FFFFFFFF"}};
+      cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFEB773B"}};cell.alignment={vertical:"middle",horizontal:"center",wrapText:true};cell.border=bord}
+    ["A1:A3","B1:I1","J1:J3","B2:B3","C2:C3","D2:D3","E2:F2","G2:H2","I2:I3"].forEach(r=>ws.mergeCells(r));
+    ws.views=[{state:"frozen",ySplit:3}];
+    let lastVia=null;
     for(let r=0;r<rows.length;r++){
-      toast(`Procesando fotografías... (ficha ${r+1} de ${rows.length})`,0);
-      const f=rows[r],fo=Array.isArray(f.fotos)?f.fotos:[],cod=(String(f.tipologia||"").match(/\(([^)]+)\)\s*$/)||[])[1]||"";
-      const row=ws.addRow([f.via||"",f.ncal||1,f.ncal==2?(f.calzada||""):"Única",f.pr||"",f.carril??"",f.tipoDanio||"",f.tipologia||"",cod,SEV[f.severidad]||f.severidad||"",
-        f.dL??"",f.dA??"",f.rL??"",f.rA??"",f.comentarios||"",fo.length]);
-      row.height=124;row.alignment={vertical:"middle",wrapText:true};
-      for(let i=0;i<Math.min(4,fo.length);i++){
+      toast(`Procesando fotografías... (daño ${r+1} de ${rows.length})`,0);
+      const f=rows[r],fis=f.tipoDanio==="Fisuras",rep=hayRepOf(f),fo=(Array.isArray(f.fotos)?f.fotos:[]).slice(0,4);
+      if(via==="__all"&&f.via!==lastVia){ // separador de vía (no es una columna adicional)
+        const br=ws.addRow([`VÍA ${f.via}`]);ws.mergeCells(br.number,1,br.number,10);br.height=22;
+        const c=br.getCell(1);c.font={bold:true,color:{argb:"FFEB773B"}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFFDF0E8"}};c.border=bord;lastVia=f.via}
+      const row=ws.addRow([f.pr||"",carrilLabel(f),f.tipologia||"",SEV[f.severidad]||f.severidad||"",f.dL??"",fis?"":(f.dA??""),rep?(f.rL??""):"",rep&&!fis?(f.rA??""):"",null,f.comentarios||""]);
+      const lay=LAY(fo.length);row.height=lay.rowPx*0.75;
+      for(let c=1;c<=10;c++){const cell=row.getCell(c);cell.border=bord;cell.alignment={vertical:c===10?"top":"middle",horizontal:c===10||c===3?"left":"center",wrapText:true}}
+      if(!rep){ws.mergeCells(row.number,7,row.number,8);row.getCell(7).value="No hay reparación"}
+      for(let i=0;i<fo.length;i++){
         try{
-          const t=await thumb(fo[i]),id=wb.addImage({base64:t.data,extension:"jpeg"});
-          // centrada en la celda (columna de ~222 px, fila de ~165 px)
-          ws.addImage(id,{tl:{col:15+i+Math.max(0,(222-t.w)/2/222),row:r+1+Math.max(0,(165-t.h)/2/165)},ext:{width:t.w,height:t.h},editAs:"oneCell"});
-        }catch(e){errores++;console.warn("Foto con error",f.id,i+1,e);row.getCell(16+i).value="Error al exportar imagen"}
+          const cl=lay.c[i],t=await thumb(fo[i],cl.w,cl.h),id=wb.addImage({base64:t.data,extension:"jpeg"});
+          const x=cl.x+(cl.w-t.w)/2,y=cl.y+(cl.h-t.h)/2; // centrada en su recuadro, dentro de la celda Foto (columna I)
+          ws.addImage(id,{tl:{nativeCol:8,nativeColOff:Math.round(x*9525),nativeRow:row.number-1,nativeRowOff:Math.round(y*9525)},ext:{width:t.w,height:t.h},editAs:"oneCell"});
+        }catch(e){errores++;console.warn("Foto con error",f.id,i+1,e);row.getCell(9).value="Error al exportar imagen"}
       }
       if(r%5===4)await new Promise(x=>setTimeout(x)); // cede el control para no congelar la interfaz
     }
@@ -393,12 +510,17 @@ document.addEventListener("click",async e=>{
   else if(a==="del"){if(confirm("¿Eliminar esta ficha y su pin?")){await store.del("fichas",id);for(const p of DB.pines.filter(p=>p.fichaId===id))await store.del("pines",p.id);toast("Ficha eliminada")}}
   else if(a==="delpin"){if(confirm("¿Eliminar este pin?")){map.closePopup();await store.del("pines",id);toast("Pin eliminado")}}
   else if(a==="pinmode")setPinMode(!pinMode);
+  else if(a==="prev")prevStep();
+  else if(a==="verf")showFicha(id,t.dataset.g);
+  else if(a==="back")openGroup(t.dataset.g);
+  else if(a==="editv"){closeAll();openForm(DB.fichas.find(f=>f.id===id))}
+  else if(a==="delgrp"){const o=MAPG.get(t.dataset.g);if(o&&confirm("¿Eliminar este pin del mapa? Las fichas no se borran.")){for(const it of o.items)await store.del("pines",it.pin.id);closeAll();toast("Pin eliminado")}}
   else if(a==="savepin"){
     await store.save("pines",uid(),{fichaId:$("#pinFicha").value,lat:pending.lat,lng:pending.lng});
     $("#mPin").classList.remove("on");toast("Pin guardado");
   }
 });
-syncForm();renderAll();
+fillTip();fillCar();vis();renderAll();
 </script>
 </body>
 </html>
