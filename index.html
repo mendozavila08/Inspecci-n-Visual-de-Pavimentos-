@@ -70,6 +70,8 @@ dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:1
 .pin span{display:block;transform:rotate(45deg);color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:16px}
 .glist{display:flex;width:100%;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;text-align:left}
 .vbox .ph{height:260px}
+.geo{background:var(--brand2);padding:10px 12px;border-radius:8px}.geoB{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+input[readonly]{background:#f1f3f6;color:var(--mut)}
 .prev{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.prev div{position:relative}.prev img{width:96px;height:72px;object-fit:cover;border-radius:6px;border:2px solid var(--line)}
 .prev .main img{border-color:var(--brand)}.prev span{position:absolute;left:3px;bottom:3px;background:var(--brand);color:#fff;font-size:10px;padding:1px 5px;border-radius:4px}
 .prev button{position:absolute;right:2px;top:2px;border:0;background:#000a;color:#fff;border-radius:50%;width:20px;height:20px;cursor:pointer}
@@ -121,8 +123,10 @@ footer{text-align:center;color:var(--mut);padding:18px;font-size:12px}
     <label id="calW" class="gen hide">Calzada<select id="calz"><option>Derecha</option><option>Izquierda</option></select></label>
     <label class="gen">PR <span class="hint">ej. PR 9+500</span><input id="pr" placeholder="PR 9+500"></label>
     <label class="gen cnt full">¿Cuántos daños se van a registrar en este PR?<input id="cnt" type="number" min="1" max="20" step="1" value="1"></label>
-    <label class="dmg coord">Latitud<input id="lat" type="number" step="any" placeholder="10.9685"></label>
-    <label class="dmg coord">Longitud<input id="lng" type="number" step="any" placeholder="-74.7813"></label>
+    <div class="dmg coord full geo"><div id="geoMsg" class="hint"></div>
+      <div class="geoB"><button type="button" class="btn sec sm" id="geoGps" data-act="geogps">Usar mi ubicación actual</button><button type="button" class="btn sec sm" id="geoMan" data-act="geoman">Ingresar coordenadas manualmente</button></div></div>
+    <label class="dmg coord hide">Latitud<input id="lat" type="number" step="any" placeholder="10.9685"></label>
+    <label class="dmg coord hide">Longitud<input id="lng" type="number" step="any" placeholder="-74.7813"></label>
     <div class="full hint off" id="cNote"></div>
     <label class="dmg">Carril<select id="car"></select></label>
     <label class="dmg">Tipo de daño<select id="tdan"></select></label>
@@ -267,6 +271,61 @@ function renderList(){
 /* ============ FORMULARIO (uno o varios daños por PR) ============ */
 let editId=null,fotos=[];
 const G={n:1,step:0,gen:null,drafts:[]}; // step 0 = datos del PR; 1..n = cada daño
+
+/* ---- Coordenadas automáticas: 1) EXIF de la foto original, 2) GPS del dispositivo, 3) ingreso manual ---- */
+const GEO={src:"",acc:null,busy:false,msg:"",show:false,tried:false,id:0}; // src: exif | gps | saved | manual | ""
+const MANUAL_MSG="No fue posible obtener las coordenadas automáticamente. Puedes ingresarlas manualmente.";
+async function exifGPS(file){ // lee el archivo ORIGINAL (la compresión por canvas borra el EXIF); no lo modifica
+  try{
+    const v=new DataView(await file.slice(0,262144).arrayBuffer());
+    if(v.getUint16(0)!==0xFFD8)return null;
+    for(let o=2;o+4<v.byteLength;){
+      const m=v.getUint16(o),len=v.getUint16(o+2);
+      if(m===0xFFE1&&v.getUint32(o+4)===0x45786966)return parseGPS(v,o+10);
+      if((m&0xFF00)!==0xFF00||m===0xFFDA)break;
+      o+=2+len;
+    }
+  }catch(e){}
+  return null;
+}
+function parseGPS(v,t){
+  const le=v.getUint16(t)===0x4949,u16=o=>v.getUint16(o,le),u32=o=>v.getUint32(o,le);
+  const ifd=off=>{const n=u16(t+off),r={};for(let i=0;i<n;i++){const e=t+off+2+i*12;r[u16(e)]={type:u16(e+2),count:u32(e+4),ptr:e+8}}return r};
+  const g=ifd(u32(t+4))[0x8825];if(!g)return null;
+  const gi=ifd(u32(g.ptr)),ref=e=>e?String.fromCharCode(v.getUint8(e.ptr)).toUpperCase():"";
+  const dms=e=>{if(!e||e.type!==5||e.count<3)return null;const p=t+u32(e.ptr),r=[];
+    for(let i=0;i<3;i++){const d=u32(p+i*8+4);r.push(d?u32(p+i*8)/d:0)}return r[0]+r[1]/60+r[2]/3600};
+  let lat=dms(gi[2]),lng=dms(gi[4]);const rl=ref(gi[1]),ro=ref(gi[3]);
+  if(lat==null||lng==null||!/^[NS]$/.test(rl)||!/^[EW]$/.test(ro))return null;
+  if(rl==="S")lat=-lat;if(ro==="W")lng=-lng;
+  if(!isFinite(lat)||!isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180||(lat===0&&lng===0))return null;
+  return {lat:+lat.toFixed(6),lng:+lng.toFixed(6)};
+}
+function geoRender(){
+  const lock=["exif","gps","saved"].includes(GEO.src);
+  ["#lat","#lng"].forEach(q=>{$(q).readOnly=lock;$(q).closest("label").classList.toggle("hide",!GEO.show)});
+  const T={exif:"Ubicación obtenida de los metadatos GPS de la fotografía.",gps:"Ubicación actual detectada correctamente. Corresponde a donde estás ahora; si la foto se tomó en otro lugar, corrígela.",saved:"Coordenadas almacenadas en la ficha. Pulsa «Corregir manualmente» solo si necesitas cambiarlas.",manual:"Ingreso manual: las coordenadas se validarán al guardar."};
+  let t=GEO.busy?"Detectando ubicación... La app usará tu ubicación solo para registrar las coordenadas del daño vial.":GEO.msg||T[GEO.src]||"Sube una fotografía con GPS, usa tu ubicación actual o ingresa las coordenadas manualmente.";
+  if(!GEO.busy&&GEO.src==="gps"&&GEO.acc!=null)t+=` Precisión: ±${Math.round(GEO.acc)} m${GEO.acc>100?" (ubicación aproximada: verifícala o corrígela)":""}.`;
+  $("#geoMsg").textContent=t;
+  $("#geoMan").textContent=lock?"Corregir manualmente":"Ingresar coordenadas manualmente";
+  $("#geoGps").disabled=GEO.busy;
+}
+function setCoords(lat,lng,src,acc){
+  $("#lat").value=lat;$("#lng").value=lng;Object.assign(GEO,{src,acc:acc??null,msg:"",show:true});geoRender();
+}
+function useGPS(){
+  GEO.tried=true;
+  if(!navigator.geolocation||window.isSecureContext===false){GEO.msg="La ubicación del dispositivo requiere HTTPS o localhost y un navegador compatible. Puedes ingresar las coordenadas manualmente.";GEO.show=true;geoRender();return}
+  if(GEO.busy)return;
+  const id=GEO.id;GEO.busy=true;GEO.msg="";geoRender();
+  try{navigator.geolocation.getCurrentPosition(
+    p=>{if(id!==GEO.id)return;GEO.busy=false;setCoords(+p.coords.latitude.toFixed(6),+p.coords.longitude.toFixed(6),"gps",p.coords.accuracy)},
+    e=>{if(id!==GEO.id)return;GEO.busy=false;GEO.show=true;GEO.msg=e.code===1?"Acceso a ubicación denegado. Puedes ingresar las coordenadas manualmente.":MANUAL_MSG;geoRender()},
+    {enableHighAccuracy:true,timeout:20000,maximumAge:0});
+  }catch(e){GEO.busy=false;GEO.show=true;GEO.msg=MANUAL_MSG;geoRender()}
+}
+["#lat","#lng"].forEach(q=>$(q).addEventListener("input",()=>{if(!GEO.src){GEO.src="manual";geoRender()}}));
 $("#via").innerHTML=opts(VIAS);$("#tdan").innerHTML=opts(Object.keys(TIPOS));
 const fillTip=()=>{$("#tip").innerHTML=opts(TIPOS[$("#tdan").value])};
 function fillCar(keep){
@@ -291,8 +350,16 @@ const compress=file=>new Promise((res,rej)=>{
     c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.6))};im.src=r.result};
   r.readAsDataURL(file)});
 $("#fotos").onchange=async e=>{
-  for(const f of e.target.files){if(fotos.length>=4){toast("Máximo 4 fotos");break}fotos.push(await compress(f))}
+  const files=[...e.target.files],auto=!editId&&G.step===1&&!GEO.src&&!GEO.busy&&!GEO.tried; // solo al crear, en el daño 1
+  let got=false;
+  for(const f of files){
+    if(fotos.length>=4){toast("Máximo 4 fotos");break}
+    if(auto&&!got){const g=await exifGPS(f);if(g){setCoords(g.lat,g.lng,"exif");got=true}} // metadatos del archivo original
+    fotos.push(await compress(f));
+  }
   e.target.value="";drawPrev();
+  if(auto&&!got&&!GEO.src){ // sin EXIF: no se asume que la ubicación actual sea la de la foto; el usuario elige
+    GEO.msg="La fotografía no contiene coordenadas GPS (algunas apps las eliminan al compartir). Si estás en el lugar del daño, usa tu ubicación actual; si la foto se tomó antes o estás en otro sitio, ingresa las coordenadas manualmente.";geoRender()}
 };
 const blank=()=>({carril:"",tdan:Object.keys(TIPOS)[0],tip:"",sev:"B",dL:"",dA:"",hrep:"0",rL:"",rA:"",com:"",fotos:[],lat:"",lng:""});
 const readDmg=()=>({carril:$("#car").value,tdan:$("#tdan").value,tip:$("#tip").value,sev:$("#sev").value,dL:$("#dL").value,dA:$("#dA").value,hrep:$("#hrep").value,rL:$("#rL").value,rA:$("#rA").value,com:$("#com").value,fotos:[...fotos],lat:$("#lat").value,lng:$("#lng").value});
@@ -311,10 +378,11 @@ function view(){
   $("#prevBtn").classList.toggle("hide",e||s===0);
   $("#saveBtn").textContent=e?"Guardar cambios":s===0?"Continuar":s<G.n?"Siguiente daño":`Guardar ${G.n} daño${G.n>1?"s":""}`;
   if(!e&&s>1){const d=G.drafts[0];$("#cNote").textContent=`Coordenadas del grupo (heredadas del daño 1): ${d.lat}, ${d.lng}`}
-  $("#mFicha").scrollTop=0;
+  geoRender();$("#mFicha").scrollTop=0;
 }
 function openForm(f){
   editId=f?.id||null;$("#mTitle").textContent=f?"Editar ficha":"Añadir ficha";
+  Object.assign(GEO,{src:f&&f.lat!=null&&f.lat!==""?"saved":"",acc:null,busy:false,msg:"",show:!!f,tried:false,id:GEO.id+1}); // coordenadas del grupo anterior descartadas
   G.step=0;G.n=1;G.gen=null;G.drafts=[]; // grupo nuevo: no se reutilizan coordenadas anteriores
   $("#via").value=f?.via||VIAS[0];$("#ncal").value=f?.ncal||1;$("#calz").value=f?.calzada||"Derecha";$("#pr").value=f?.pr||"";$("#cnt").value=1;
   if(f){
@@ -348,7 +416,7 @@ function start(){
 async function saveFicha(){
   if(editId)return saveEdit();
   if(G.step===0)return start();
-  capture();const err=validDmg(G.drafts[G.step-1],G.step===1);if(err){toast(err);return}
+  capture();const err=validDmg(G.drafts[G.step-1],G.step===1);if(err){toast(err);if(G.step===1&&/latitud/.test(err)){GEO.show=true;geoRender()}return}
   if(G.step<G.n){G.step++;writeDmg(G.drafts[G.step-1]);view();return}
   for(let i=0;i<G.n;i++){const e=validDmg(G.drafts[i],i===0);if(e){G.step=i+1;writeDmg(G.drafts[i]);view();toast(`Daño ${i+1}: ${e}`);return}}
   const shared={lat:Number(G.drafts[0].lat),lng:Number(G.drafts[0].lng)},gid=uid(),t0=Date.now();
@@ -511,6 +579,8 @@ document.addEventListener("click",async e=>{
   else if(a==="delpin"){if(confirm("¿Eliminar este pin?")){map.closePopup();await store.del("pines",id);toast("Pin eliminado")}}
   else if(a==="pinmode")setPinMode(!pinMode);
   else if(a==="prev")prevStep();
+  else if(a==="geogps")useGPS();
+  else if(a==="geoman"){Object.assign(GEO,{src:"manual",msg:"",show:true});geoRender();$("#lat").focus()}
   else if(a==="verf")showFicha(id,t.dataset.g);
   else if(a==="back")openGroup(t.dataset.g);
   else if(a==="editv"){closeAll();openForm(DB.fichas.find(f=>f.id===id))}
